@@ -1,0 +1,16 @@
+# Python bytecode
+*.py[cod]
+
+# Temporary files
+*~
+
+# Folders
+help/
+i18n/
+scripts/
+test/
+
+# Additional files from plugin builder
+pb_tool.cfg
+pylintrc
+Makefile

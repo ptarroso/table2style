@@ -16,8 +16,7 @@ information and attributes and creates a new style for raster display.
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
+ *   the Free Software Foundation; version 3.                              *
  *                                                                         *
  ***************************************************************************/
 """
@@ -30,7 +29,7 @@ from qgis.core import QgsSingleBandPseudoColorRenderer as renderer
 from random import randint
 
 # Initialize Qt resources from file resources.py
-import resources_rc
+import resources
 # Import the code for the dialog
 from table2style_dialog import table2styleDialog
 import os.path
@@ -51,7 +50,7 @@ def readFieldData(layer, fieldnames):
     iter = layer.getFeatures()
     for feature in iter:
         fData.append([feature.attributes()[i] for i in FIDs])
-
+    
     return(fData)
 
 def rndColor(alpha = 255):
@@ -70,22 +69,25 @@ def createRasterShader(fields, scale=False):
     shader = QgsRasterShader()
     colRamp = QgsColorRampShader()
     colRamp.setColorRampType(QgsColorRampShader.INTERPOLATED)
-
+    
     ramp = []
+    
     for line in fields:
-        val = line[0]
+        val = float(line[0])
         rgba = line[2:6]
-
+        
         if scale:
             rgba = [int(float(x)*255.0) for x in rgba]
-
+        else:
+            rgba = [int(x) for x in rgba]
+        
         col = QColor(*rgba)
-        txt = str(line[1])
+        txt = unicode(line[1])
         ramp.append(QgsColorRampShader.ColorRampItem(val, col, txt))
-
+    
     colRamp.setColorRampItemList(ramp)
     shader.setRasterShaderFunction(colRamp)
-
+    
     return(shader)
     
 def intClass(classList):
@@ -99,7 +101,7 @@ def reclassRaster(raster, classList, dstfile, xBSize=1000, yBSize=1000,
                   band=1):
     """ Generator raster blocks"""
     from osgeo import gdal
-
+    
     provider = raster.dataProvider()
     rasterFile = str(provider.dataSourceUri())
     
@@ -109,11 +111,11 @@ def reclassRaster(raster, classList, dstfile, xBSize=1000, yBSize=1000,
     geoTrans = rasterData.GetGeoTransform()
     proj = rasterData.GetProjection()
     dt = bandData.DataType
-
+    
     ncols = rasterData.RasterXSize
     nrows = rasterData.RasterYSize
     nodata = bandData.GetNoDataValue()
-
+    
     driver = gdal.GetDriverByName('GTiff')
     dstRaster = driver.Create(dstfile, ncols, nrows, 1, dt)
     dstRaster.SetGeoTransform(geoTrans)
@@ -130,14 +132,14 @@ def reclassRaster(raster, classList, dstfile, xBSize=1000, yBSize=1000,
             blockCols = xBSize
             if x + xBSize >= ncols:
                 blockCols = ncols - x
-
+            
             data = bandData.ReadAsArray(x, y, blockCols, blockRows)
-
+            
             # reclass the data
             if sum(sum(data==nodata)) != data.size:
                 for cl in [c for c in classList if c[0] in data]:
                     data[data == cl[0]] = cl[1]
-
+            
             dstBand.WriteArray(data, x, y)
             print(count)
             count += 1
@@ -333,7 +335,7 @@ class table2style:
 
             d = self.dlg
             table = self.getLayerbyName(d.getTable())
-            fields = [d.getValue(), d.getDescription()]
+            fields = [unicode(d.getValue()), d.getDescription()]
             rndCol = d.getRandomCol()
             if not rndCol:
                 fields = fields + d.getColors()
