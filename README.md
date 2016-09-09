@@ -2,8 +2,9 @@
 
 Table2style is a plug-in for QGIS (version >= 2.0; http://www.qgis.org). It reads
 data from a table containing pixel values and a correspondent description and
-creates a color style and legend for a raster. If the table does not contain RGB
-values, random colors are attributed to each class in the description. 
+creates a color style and legend for a raster. If the table does not contain RGB,
+HSV values or Hexadecimal triplets, random colors are attributed to each class in 
+the description. 
 
 This plugin also exports a the classification to a new raster, where pixels with
 values corresponding to the same description are given a new unique value. To the
@@ -17,7 +18,9 @@ visualization that is given in accessory file (e.g. [Global ecosystems](http://r
 The table2style plug-in allows to:
  
 * Add a style to a raster based on a table
-* Use RGB values for each class in the table or random colors
+* Use RGB,HSV or hexadecimal values for each class in the table or random colors
+* RGB and HSV can be either with **integer** values (range 0-255 for RGB channels; 0-360, 
+0-100, 0-100 fro Hue, saturation, Value, respectively) or **float** (range between 0 and 1.0)
 * Export the classification to a new raster
 
 ## Installation
