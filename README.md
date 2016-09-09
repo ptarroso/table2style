@@ -50,4 +50,16 @@ scale accordingly!
 
 
 ## Example
-The Table2Style includes an example dataset located in the QGIS plugins folder (usually some form of *PATH_TO_YOUR_USER/.qgis2/python/plugins/Table2Style* [see QGIS manuals](http://docs.qgis.org/testing/en/docs/pyqgis_developer_cookbook/plugins.html)). The example has one raster file, **raster.tif**, and one text file, **colortable.txt** with the information of color for each pixel value. Open the raster the usual way in QGIS and the color table with the [Add Delimited Text Layer Button](http://docs.qgis.org/2.14/en/docs/user_manual/working_with_vector/supported_data.html?highlight=delimited%20text#delimited-text-files). Start the table2style plugin, either with the icon in the panel or menu *Raster -> table to style -> Convert attributes to style*. Choose the raster as the *Raster layer*, the color table as *Attribute table*. The Value field in the example is "value" and the description field is *description*. If in your data sets there is no description available, you can use the value again. Choose the fields in the color table that contain information for the Red, Green and blue channels and the correct scale, or generate random colors by checking the respective box. Optionally, export the new raster.
+The Table2Style includes an example dataset located in the QGIS plugins folder (usually some form of *PATH_TO_YOUR_USER/.qgis2/python/plugins/Table2Style*; [see QGIS manuals](http://docs.qgis.org/testing/en/docs/pyqgis_developer_cookbook/plugins.html)). The example has one raster file, **raster.tif**, and one text file, **colortable.txt** with the color information for each pixel value. This file contains RGB, HSV and Hex color codes with different coloring schemes.
+
+1. Open the raster the usual way in QGIS.
+
+2. Open the color table with the [Add Delimited Text Layer Button](http://docs.qgis.org/2.14/en/docs/user_manual/working_with_vector/supported_data.html?highlight=delimited%20text#delimited-text-files). Do not forget to check the "No Geometry" option.
+
+3. Start the table2style plugin, either with the icon in the panel or menu *Raster -> table to style -> Convert attributes to style*. 
+
+4. Choose the raster as the *Raster layer* and the color table as *Attribute table*. The *Pixel Value field* in the example is "value" and the *description field* is "description". If in your data sets there is no description available, you can use the pixel value. 
+
+5. Choose the type of color code (RGB, HSV or Hex) and select the respective fields in the combo boxes. The plugin will try to identify the fields based on the name. Confirm if the fields are ok. The value of the HSV might be incorrect: choose the field "val" instead of "value". Optionally, choose random colors.
+
+6. Check the export the new raster button if you want to save a new raster. This option is useful as it reclassifies the raster to unique values. If you have different pixel values with the same color/description, those will be merge to a single class in the new raster.
