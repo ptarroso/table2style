@@ -65,24 +65,31 @@ def rndColorRamp(n, alpha=255):
     cRamp = [rndColor(alpha) for x in range(n)]
     return(cRamp)
 
-def createRasterShader(fields, scale=False):
+def createRasterShader(fields, mode = "rgb", scale = "float"):
     shader = QgsRasterShader()
     colRamp = QgsColorRampShader()
     colRamp.setColorRampType(QgsColorRampShader.INTERPOLATED)
     
     ramp = []
+    col = QColor()
     
     for line in fields:
         val = float(line[0])
-        rgba = line[2:6]
-        
-        if scale:
-            rgba = [int(float(x)*255.0) for x in rgba]
-        else:
-            rgba = [int(x) for x in rgba]
-        
-        col = QColor(*rgba)
         txt = unicode(line[1])
+       
+        if mode == "rgb" or mode == "rnd":
+            if scale != "float":
+                color = [float(x)/255.0 for x in line[2:6]]
+            col.setRgbF(*color)
+            
+        elif mode == "hsv":
+            if scale != "float":
+                color = [float(x)/float(y) for x,y in zip(line[2:6], [360, 100, 100, 255])]
+            col.setHsvF(*color)
+            
+        elif mode == "hex":
+            col.setNamedColor(str(line[2]))
+
         ramp.append(QgsColorRampShader.ColorRampItem(val, col, txt))
     
     colRamp.setColorRampItemList(ramp)
@@ -330,14 +337,16 @@ class table2style:
         # Run the dialog event loop
         result = self.dlg.exec_()
 
+
         # See if OK was pressed
         if result:
 
             d = self.dlg
             table = self.getLayerbyName(d.getTable())
             fields = [unicode(d.getValue()), d.getDescription()]
-            rndCol = d.getRandomCol()
-            if not rndCol:
+            colorMode = d.colorMode
+            
+            if colorMode != "rnd":
                 fields = fields + d.getColors()
 
             fieldData = readFieldData(table, fields)
@@ -345,13 +354,13 @@ class table2style:
             grid = self.getLayerbyName(d.getRaster())
 
             # If random colors, create a color for each category
-            if rndCol:
+            if colorMode == "rnd":
                 cat = list(set([x[1] for x in fieldData]))
                 colors = rndColorRamp(len(cat))
                 fieldData = [x + colors[cat.index(x[1])] for x in fieldData]
                 
             # Paint raster
-            shader = createRasterShader(fieldData, d.getScale == "one")
+            shader = createRasterShader(fieldData, colorMode, d.getScale)
             render = renderer(grid.dataProvider(), 1, shader)
             grid.setRenderer(render)
             grid.triggerRepaint()
@@ -368,7 +377,7 @@ class table2style:
                 QgsMapLayerRegistry.instance().addMapLayer(newLayer)
                 
                 # Re-paint the new raster
-                shader = createRasterShader(cat, d.getScale == "one")
+                shader = createRasterShader(cat, colorMode, d.getScale)
                 render = renderer(newLayer.dataProvider(), 1, shader)
                 newLayer.setRenderer(render)
                 newLayer.triggerRepaint()

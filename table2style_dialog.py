@@ -42,15 +42,18 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
     def __init__(self, iface, parent=None):
         """Constructor."""
         super(table2styleDialog, self).__init__(parent)
-        # Set up the user interface from Designer.
-        # After setupUI you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.iface = iface
+        self.colorMode = "rgb"
         self.tableCombo.currentIndexChanged.connect(self.updateFields)
-        self.rndColorsCheck.clicked.connect(self.stateRGB)
+        
+        self.rgbColorsCheck.setChecked(True)
+        
+        self.rgbColorsCheck.clicked.connect(self.updateState)
+        self.hsvColorsCheck.clicked.connect(self.updateState)
+        self.hexColorsCheck.clicked.connect(self.updateState)
+        self.rndColorsCheck.clicked.connect(self.updateState)
+        
         self.newrasterCheck.clicked.connect(self.stateNewRaster)
         self.rasterBrowse.clicked.connect(self.browseNewRaster)
 
@@ -70,29 +73,41 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
         return(bool(self.rndColorsCheck.checkState()))
 
     def getColors(self):
-        if self.getRandomCol():
+        if self.colorMode == "rnd":
             return(None)
-        else:
+        elif self.colorMode == "rgb":
             red = unicode(self.redCombo.currentText())
             green = unicode(self.greenCombo.currentText())
             blue = unicode(self.blueCombo.currentText())
             alpha = unicode(self.alphaCombo.currentText())
             return([red, green, blue, alpha])
+        elif self.colorMode == "hsv":
+            hue = unicode(self.hueCombo.currentText())
+            sat = unicode(self.satCombo.currentText())
+            val = unicode(self.valCombo.currentText())
+            alpha = unicode(self.alphahsvCombo.currentText())
+            return([hue, sat, val, alpha])
+        elif self.colorMode == "hex":
+            hexcol = unicode(self.hexCombo.currentText())
+            return([hexcol])
 
     def getScale(self):
-        if self.getRandomCol():
-            return(None)
+        if self.colorMode == "rgb" | self.colorMode == "hsv":
+            if self.scaleInt.isChecked():
+                return("int")
+            if self.scaleFloat.isChecked():
+                return("float")
         else:
-            if self.scaleByte.isChecked():
-                return("byte")
-            if self.scaleOne.isChecked():
-                return("one")
+            return("int")
 
     def getNewRaster(self):
         return(bool(self.newrasterCheck.checkState()))
 
     def getNewRasterFile(self):
         return(self.newrasterText.displayText())
+
+    def setColorMode(self, mode):
+        self.colorMode = mode
 
     def updateCombo(self, combo, items):
         if len(items) > 0:
@@ -119,22 +134,62 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
                 fillCombo(self.greenCombo, fields, "*green*")
                 fillCombo(self.blueCombo, fields, "*blue*")
                 fillCombo(self.alphaCombo, fields, "*opacity*")
-
-
+                fillCombo(self.hueCombo, fields, "*hue*")
+                fillCombo(self.satCombo, fields, "*sat*")
+                fillCombo(self.valCombo, fields, "*val*")
+                fillCombo(self.alphahsvCombo, fields, "*opacity*")
+                fillCombo(self.hexCombo, fields, "*hex*")
+ 
+    def updateState(self):
+        self.stateRGB()
+        self.stateHSV()
+        self.stateHEX()
+        self.stateRND()
+        self.stateScale()
+                
     def stateRGB(self):
-        self.redCombo.setEnabled(not self.getRandomCol())
-        self.greenCombo.setEnabled(not self.getRandomCol())
-        self.blueCombo.setEnabled(not self.getRandomCol())
-        self.alphaCombo.setEnabled(not self.getRandomCol())
-        self.redLabel.setEnabled(not self.getRandomCol())
-        self.greenLabel.setEnabled(not self.getRandomCol())
-        self.blueLabel.setEnabled(not self.getRandomCol())
-        self.alphaLabel.setEnabled(not self.getRandomCol())
-        self.scaleByte.setEnabled(not self.getRandomCol())
-        self.scaleOne.setEnabled(not self.getRandomCol())
-        self.scaleLabel.setEnabled(not self.getRandomCol())
+        state = bool(self.rgbColorsCheck.checkState())
+        self.redCombo.setEnabled(state)
+        self.greenCombo.setEnabled(state)
+        self.blueCombo.setEnabled(state)
+        self.alphaCombo.setEnabled(state)
+        self.redLabel.setEnabled(state)
+        self.greenLabel.setEnabled(state)
+        self.blueLabel.setEnabled(state)
+        self.alphaLabel.setEnabled(state)
+        if state: 
+            self.setColorMode("rgb")
 
+    def stateHSV(self):
+        state = bool(self.hsvColorsCheck.checkState())
+        self.hueCombo.setEnabled(state)
+        self.satCombo.setEnabled(state)
+        self.valCombo.setEnabled(state)
+        self.alphahsvCombo.setEnabled(state)
+        self.hueLabel.setEnabled(state)
+        self.satLabel.setEnabled(state)
+        self.valLabel.setEnabled(state)
+        self.alphahsvLabel.setEnabled(state)
+        if state: 
+            self.setColorMode("hsv")
+            
+    def stateHEX(self):
+        state = bool(self.hexColorsCheck.checkState())    
+        self.hexCombo.setEnabled(state)
+        self.hexLabel.setEnabled(state)
+        if state: 
+            self.setColorMode("hex")
 
+    def stateRND(self):
+        if bool(self.rndColorsCheck.checkState()):
+            self.setColorMode("rnd")
+            
+    def stateScale(self):
+        state = bool(self.rgbColorsCheck.checkState()) | bool(self.hsvColorsCheck.checkState())
+        self.scaleByte.setEnabled(state)
+        self.scaleOne.setEnabled(state)
+        self.scaleLabel.setEnabled(state)
+            
     def getSugestedDir(self):
         sugesteddir = ""
         allLayers = self.iface.legendInterface().layers()
