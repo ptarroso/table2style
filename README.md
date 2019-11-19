@@ -1,6 +1,6 @@
 # Table2style
 
-Table2style is a plug-in for QGIS (version >= 2.0; http://www.qgis.org). It reads
+Table2style is a plug-in for QGIS (version >= 3.0; http://www.qgis.org). It reads
 data from a table containing pixel values and a correspondent description and
 creates a color style and legend for a raster. If the table does not contain RGB,
 HSV values or Hexadecimal triplets, random colors are attributed to each class in 

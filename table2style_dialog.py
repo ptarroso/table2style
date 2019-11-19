@@ -22,9 +22,11 @@ information and attributes and creates a new style for raster display.
  ***************************************************************************/
 """
 
+from builtins import str
 import os
 
-from PyQt4 import QtGui, uic, QtCore
+from qgis.PyQt import uic, QtCore, QtWidgets
+from qgis.core import QgsProject
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'table2style_dialog_base.ui'))
@@ -38,7 +40,7 @@ def fillCombo(combo, strings, match=None):
         if index >= 0:
             combo.setCurrentIndex(index)
                 
-class table2styleDialog(QtGui.QDialog, FORM_CLASS):
+class table2styleDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, iface, parent=None):
         """Constructor."""
         super(table2styleDialog, self).__init__(parent)
@@ -58,16 +60,16 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
         self.rasterBrowse.clicked.connect(self.browseNewRaster)
 
     def getRaster(self):
-        return(unicode(self.rasterCombo.currentText()))
+        return(str(self.rasterCombo.currentText()))
 
     def getTable(self):
-        return(unicode(self.tableCombo.currentText()))
+        return(str(self.tableCombo.currentText()))
 
     def getValue(self):
-        return(unicode(self.valueCombo.currentText()))
+        return(str(self.valueCombo.currentText()))
 
     def getDescription(self):
-        return(unicode(self.descriptionCombo.currentText()))
+        return(str(self.descriptionCombo.currentText()))
 
     def getRandomCol(self):
         return(bool(self.rndColorsCheck.checkState()))
@@ -76,19 +78,19 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
         if self.colorMode == "rnd":
             return(None)
         elif self.colorMode == "rgb":
-            red = unicode(self.redCombo.currentText())
-            green = unicode(self.greenCombo.currentText())
-            blue = unicode(self.blueCombo.currentText())
-            alpha = unicode(self.alphaCombo.currentText())
+            red = str(self.redCombo.currentText())
+            green = str(self.greenCombo.currentText())
+            blue = str(self.blueCombo.currentText())
+            alpha = str(self.alphaCombo.currentText())
             return([red, green, blue, alpha])
         elif self.colorMode == "hsv":
-            hue = unicode(self.hueCombo.currentText())
-            sat = unicode(self.satCombo.currentText())
-            val = unicode(self.valCombo.currentText())
-            alpha = unicode(self.alphahsvCombo.currentText())
+            hue = str(self.hueCombo.currentText())
+            sat = str(self.satCombo.currentText())
+            val = str(self.valCombo.currentText())
+            alpha = str(self.alphahsvCombo.currentText())
             return([hue, sat, val, alpha])
         elif self.colorMode == "hex":
-            hexcol = unicode(self.hexCombo.currentText())
+            hexcol = str(self.hexCombo.currentText())
             return([hexcol])
 
     def getScale(self):
@@ -123,11 +125,12 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
         else:
             self.valueCombo.setEnabled(True)
             self.descriptionCombo.setEnabled(True)
-            allLayers = self.iface.legendInterface().layers()
+            layerTree = QgsProject.instance().layerTreeRoot().findLayers()
+            allLayers = [lyr.layer() for lyr in layerTree]
             allLyrNames = [lyr.name() for lyr in allLayers]
             if table in allLyrNames:
                 lyr = allLayers[allLyrNames.index(table)]
-                fields = [f.name() for f in lyr.pendingFields()]
+                fields = [f.name() for f in lyr.fields()]
                 fillCombo(self.valueCombo, fields, "*value*")
                 fillCombo(self.descriptionCombo, fields, "*descr*")
                 fillCombo(self.redCombo, fields, "*red*")
@@ -192,7 +195,8 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
             
     def getSugestedDir(self):
         sugesteddir = ""
-        allLayers = self.iface.legendInterface().layers()
+        layerTree = QgsProject.instance().layerTreeRoot().findLayers()
+        allLayers = [lyr.layer() for lyr in layerTree]
         allLyrNames = [lyr.name() for lyr in allLayers]
         if self.getRaster() in allLyrNames:
             lyr = allLayers[allLyrNames.index(self.getRaster())]
@@ -211,7 +215,7 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
     def browseNewRaster(self):
         defaultdir = self.getSugestedDir()
         ext = u'geoTif (*.tif)' # Only tif extension (for now)
-        filename = QtGui.QFileDialog.getSaveFileName(self, "Select new raster ", defaultdir, ext)
+        filename = QtWidgets.QFileDialog.getSaveFileName(self, "Select new raster ", defaultdir, ext)
         if filename != "":
             if (filename[-4:].lower() != ".tif" and
                 filename[-5:].lower() != ".tiff" and
@@ -219,4 +223,3 @@ class table2styleDialog(QtGui.QDialog, FORM_CLASS):
                 filename += ".tif"
             self.newrasterText.clear()
             self.newrasterText.setText(filename)
-

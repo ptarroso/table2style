@@ -20,23 +20,31 @@ information and attributes and creates a new style for raster display.
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion
-from PyQt4.QtCore import QCoreApplication
-from PyQt4.QtGui import QAction, QIcon, QFileDialog, QColor
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import str
+from builtins import map
+from builtins import zip
+from builtins import range
+from builtins import object
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion
+from qgis.PyQt.QtCore import QCoreApplication
+from qgis.PyQt.QtWidgets import QAction, QFileDialog
+from qgis.PyQt.QtGui import QIcon, QColor
 from qgis.core import QgsRasterShader, QgsColorRampShader, QgsRasterLayer
-from qgis.core import QgsMapLayerRegistry
+from qgis.core import QgsProject
 from qgis.core import QgsSingleBandPseudoColorRenderer as renderer
 from random import randint
 
 # Initialize Qt resources from file resources.py
-import resources
+from . import resources
 # Import the code for the dialog
-from table2style_dialog import table2styleDialog
+from .table2style_dialog import table2styleDialog
 import os.path
 
 def getListFields(lyr):
     """ Returns a list of field names available in the layer"""
-    Fields = lyr.pendingFields()
+    Fields = lyr.fields()
     FNames = [field.name() for field in Fields]
     return(FNames)
 
@@ -68,14 +76,14 @@ def rndColorRamp(n, alpha=255):
 def createRasterShader(fields, mode = "rgb", scale = "float"):
     shader = QgsRasterShader()
     colRamp = QgsColorRampShader()
-    colRamp.setColorRampType(QgsColorRampShader.INTERPOLATED)
+    colRamp.setColorRampType(QgsColorRampShader.Interpolated)
     
     ramp = []
     col = QColor()
     
     for line in fields:
         val = float(line[0])
-        txt = unicode(line[1])
+        txt = str(line[1])
        
         if mode == "rgb" or mode == "rnd":
             if scale != "float":
@@ -98,7 +106,7 @@ def createRasterShader(fields, mode = "rgb", scale = "float"):
     return(shader)
     
 def intClass(classList):
-    uniqueList = map(list, set(map(tuple, [x[1:] for x in classList])))
+    uniqueList = list(map(list, set(map(tuple, [x[1:] for x in classList]))))
     uniqueCat = [x[0] for x in uniqueList]
     cat = [[uniqueCat.index(x[0])] + x for x in uniqueList]
     newclass = [[x[0], uniqueCat.index(x[1])] for x in classList]
@@ -155,7 +163,7 @@ def reclassRaster(raster, classList, dstfile, xBSize=1000, yBSize=1000,
     dstBand.FlushCache()
 
     
-class table2style:
+class table2style(object):
     """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
@@ -310,10 +318,11 @@ class table2style:
 
     def getLayerbyName(self, name):
         """ Returns a QGIS layer  found in the TOC by its name """
-        layers = self.iface.legendInterface().layers()
-        lyrnames = [lyr.name() for lyr in layers]
-        if unicode(name) in lyrnames:
-            lyr = layers[lyrnames.index(name)]
+        layerTree = QgsProject.instance().layerTreeRoot().findLayers()
+        allLayers = [lyr.layer() for lyr in layerTree]
+        lyrnames = [lyr.name() for lyr in allLayers]
+        if str(name) in lyrnames:
+            lyr = allLayers[lyrnames.index(name)]
         else:
             raise NameError('Layer not found')
         return(lyr)
@@ -322,7 +331,8 @@ class table2style:
         """Run method that performs all the real work"""
 
         # Update combos
-        allLayers = self.iface.legendInterface().layers()
+        layerTree = QgsProject.instance().layerTreeRoot().findLayers()
+        allLayers = [lyr.layer() for lyr in layerTree]
         rasterLayers = [lyr for lyr in allLayers if lyr.type() == 1]
         rasterNames = [lyr.name() for lyr in rasterLayers]
         vectorLayers = [lyr for lyr in allLayers if lyr.type() == 0]
@@ -343,7 +353,7 @@ class table2style:
 
             d = self.dlg
             table = self.getLayerbyName(d.getTable())
-            fields = [unicode(d.getValue()), d.getDescription()]
+            fields = [str(d.getValue()), d.getDescription()]
             colorMode = d.colorMode
             
             if colorMode != "rnd":
@@ -374,7 +384,7 @@ class table2style:
                 # Add new raster to TOC and display
                 baseName = os.path.basename(dstFile)
                 newLayer = QgsRasterLayer(dstFile, baseName)
-                QgsMapLayerRegistry.instance().addMapLayer(newLayer)
+                QgsProject.instance().addMapLayer(newLayer)
                 
                 # Re-paint the new raster
                 shader = createRasterShader(cat, colorMode, d.getScale)
