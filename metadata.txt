@@ -8,7 +8,7 @@ author=Pedro Tarroso
 email=ptarroso@cibio.up.pt
 changelog=v1.1: added support for HSV and Hex color codes
 v2.0: upgraded to Qgis v3 API
-experimental=True
+experimental=False
 deprecated=False
 tags=attribute table, raster, table, style
 homepage=https://github.com/ptarroso/table2style
