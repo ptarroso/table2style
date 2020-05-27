@@ -9,6 +9,7 @@ help/
 i18n/
 scripts/
 test/
+release/
 
 # Additional files from plugin builder
 pb_tool.cfg
